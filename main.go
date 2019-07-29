@@ -122,6 +122,8 @@ func main() {
 
 	// Read config
 	configData, err := ioutil.ReadFile(configPath)
+	check(err)
+
 	var config config
 	err = json.Unmarshal(configData, &config)
 	check(err)
