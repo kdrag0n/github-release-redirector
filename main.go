@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -114,9 +115,9 @@ func getReqHandler(client *fasthttp.Client, fileMap map[string]string) fasthttp.
 }
 
 func main() {
-	var port string
+	var listenAddr string
 	var configPath string
-	flag.StringVar(&port, "port", "8947", "Port for the HTTP server to listen on")
+	flag.StringVar(&listenAddr, "addr", ":8947", "Address for the HTTP server to listen on (or unix:/path/to/socket.sock)")
 	flag.StringVar(&configPath, "config", "config.json", "JSON configuration file to read")
 	flag.Parse()
 
@@ -136,8 +137,14 @@ func main() {
 	}
 
 	// Start server
-	fmt.Printf("Starting server on port %s\n", port)
+	fmt.Printf("Starting server on %s\n", listenAddr)
 	reqHandler := getReqHandler(client, config["files"])
-	err = fasthttp.ListenAndServe(":"+port, reqHandler)
+
+	if strings.HasPrefix(listenAddr, "unix:") {
+		err = fasthttp.ListenAndServeUNIX(listenAddr[5:], 0777, reqHandler)
+	} else {
+		err = fasthttp.ListenAndServe(listenAddr, reqHandler)
+	}
+
 	check(err)
 }
